@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -O0 -g
+CFLAGS = -O3 -march=native -mavx -fopt-info-vec 
 LFLAGS = -lm
 
 PROG = cgSolver
