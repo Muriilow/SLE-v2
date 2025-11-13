@@ -5,8 +5,9 @@
 
 #include "utils.h"
 #include "sislin.h"
-
+#include <likwid.h>
 int main(){
+    LIKWID_MARKER_INIT;
     srandom(20252);
     int status = 0;
     int n;
@@ -33,6 +34,8 @@ int main(){
     struct Matrix b = {bv, n, 1, 0};
 
     struct LinearSis SL = {&A, &b, n, k};
+
+    LIKWID_MARKER_START("PREP_1");
     genKDiagonal(&SL);
 
 
@@ -53,6 +56,8 @@ int main(){
         return -1;
     }
     status = genSymmetricPositive(&SL, &A2, &b2, &timePC); 
+    LIKWID_MARKER_STOP("PREP_1");
+
     struct LinearSis SLNew = {&A2, &b2, n, k};
 
     free(av);
@@ -87,7 +92,7 @@ int main(){
         return -1;
     }
 
-
+    LIKWID_MARKER_START("EXEC_1");
     status = genPreCond(SLNew.A, w, SLNew.n, SLNew.k, &M, &timeM);
     status += conjGradientPre(&SLNew, X, r, norma,&M, maxit, eps, &timeGrad);
     free(Mv);
@@ -103,6 +108,7 @@ int main(){
 
     calcResidue(&SL, X, r, &timeRes);
     
+    LIKWID_MARKER_STOP("EXEC_1");
     printf("%d\n",n);
     printVetor(X,n);;
     double normaR = calcNormaEuclidiana(r, n);
@@ -118,5 +124,6 @@ int main(){
     free(bv1);
     free(r);
     
+    LIKWID_MARKER_CLOSE;
     return 0;
 }

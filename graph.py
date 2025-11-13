@@ -1,18 +1,25 @@
+import subprocess
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-x = np.array([2023, 2024, 2025, 2026])
-y = np.array([15, 25, 30, 20])
+# Run the likwid choosing the version of the C program and the data we want to get
+def run_likwid(arg, version):
 
-# Creating dictionary where every arg in .plot is a key 
-style = dict(marker=".", markersize="15")
+    command = "likwid-perfctr -C 0 -g " + arg + " -m ./cgSolver" 
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
-plt.plot(x, y, **style)
+        if result.returncode == 0:
+            return result
+        else:
+            print(f"Erro: {result.stderr}")
+            return None
 
-# Customizing the Graph
-plt.title("Custo", fontsize=16)
-plt.xlabel("Tamanho do Sistema Linear", fontsize=12)
-plt.xticks(x)
-plt.grid(axis="both", linestyle="dashed")
+    except Exception as err:
+        print(f"Erro ao executar comando: {err}")
+        return None
 
-plt.show()
+log = run_likwid("FLOPS_DP", "1")
+
+print(log)

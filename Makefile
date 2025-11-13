@@ -1,7 +1,7 @@
 CC = gcc
 
-CFLAGS = -O3 -march=native -mavx -fopt-info-vec 
-LFLAGS = -lm
+CFLAGS = -O3 -march=native -mavx -fopt-info-vec -DLIKWID_PERFMON -I${LIKWID_INCLUDE}
+LFLAGS = -lm -L${LIKWID_LIB} -llikwid
 
 PROG = cgSolver
 MODULES = utils	sislin utils $(PROG)
@@ -15,10 +15,10 @@ DISTDIR = gvso24-mpb24
 .PHONY: clean purge dist all
 
 %.o: %.c %.h utils.h
-	$(CC) -g -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) $<
 
 $(PROG):  $(OBJS)
-	$(CC) -g -o $@ $^ $(LFLAGS)
+	$(CC) -o $@ $^ $(LFLAGS)
 
 clean:
 	@echo "Limpando sujeira ....."
