@@ -8,7 +8,7 @@ import numpy as np
 # Run the likwid choosing the version of the C program and the data we want to get
 def run_likwid(arg, version, option, file):
 
-    command = "likwid-perfctr -C 0 -g " + arg + " -f -m -O ./cgSolver" 
+    command = "likwid-perfctr -C 0 -g " + arg + " -f -m -O ./cgSolver" + version 
 
     # Writing the output from likwid-csv in the file
     try:
@@ -56,10 +56,14 @@ def extract_output(file, results):
     
 
 # Dictionary that holds the useful information to make graphics
-results = {
+results1 = {
     'flops': {}
 }
-flops_dp = []
+results2 = {
+    'flops': {}
+}
+flops_dp1 = []
+flops_dp2 = []
 options1 = ["COM_1.in", "COM_2.in", "COM_3.in", "COM_4.in", "COM_5.in", "COM_6.in"]
 options2 = ["SEM_1.in", "SEM_2.in", "SEM_3.in", "SEM_4.in", "SEM_5.in", "SEM_6.in"]
 
@@ -69,9 +73,14 @@ for file in options1:
     with open("Dados/" + file, "r") as f: 
         option = f.read()
         run_likwid("FLOPS_DP", "1", option, "tmp.txt")
-        extract_output("tmp.txt", results)
-        flops_dp.append(results['flops']['EXEC_1']['dp'])
+        extract_output("tmp.txt", results1)
+        flops_dp1.append(results1['flops']['EXEC_1']['dp'])
 
-plt.plot(x, flops_dp)
+        run_likwid("FLOPS_DP", "2", option, "tmp.txt")
+        extract_output("tmp.txt", results2)
+        flops_dp2.append(results2['flops']['EXEC_1']['dp'])
 
+plt.plot(x, flops_dp1)
+plt.plot(x, flops_dp2)
+plt.xscale('log')
 plt.show()

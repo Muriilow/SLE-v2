@@ -35,7 +35,6 @@ int main(){
 
     struct LinearSis SL = {&A, &b, n, k};
 
-    LIKWID_MARKER_START("PREP_1");
     genKDiagonal(&SL);
 
 
@@ -56,7 +55,6 @@ int main(){
         return -1;
     }
     status = genSymmetricPositive(&SL, &A2, &b2, &timePC); 
-    LIKWID_MARKER_STOP("PREP_1");
 
     struct LinearSis SLNew = {&A2, &b2, n, k};
 
@@ -91,10 +89,12 @@ int main(){
         fprintf(stderr, "Falha na alocação de memória\n");
         return -1;
     }
+    status = genPreCond(SLNew.A, w, SLNew.n, SLNew.k, &M, &timeM);
 
     LIKWID_MARKER_START("EXEC_1");
-    status = genPreCond(SLNew.A, w, SLNew.n, SLNew.k, &M, &timeM);
     status += conjGradientPre(&SLNew, X, r, norma,&M, maxit, eps, &timeGrad);
+    LIKWID_MARKER_STOP("EXEC_1");
+
     free(Mv);
 
     if (status < 0){
@@ -106,9 +106,10 @@ int main(){
         return -1;
     }
 
+    LIKWID_MARKER_START("RES_1");
     calcResidue(&SL, X, r, &timeRes);
+    LIKWID_MARKER_STOP("RES_1");
     
-    LIKWID_MARKER_STOP("EXEC_1");
     printf("%d\n",n);
     printVetor(X,n);;
     double normaR = calcNormaEuclidiana(r, n);
