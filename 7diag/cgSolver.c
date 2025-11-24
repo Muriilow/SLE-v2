@@ -9,10 +9,14 @@
 int main(){
 
     struct diag7* newdiag = malloc(sizeof(struct diag7));
+    struct diag7* newtransp = malloc(sizeof(struct diag7));
     newdiag->n = 10;
     srandom(20252);
     gen7Diagonal(newdiag);
     print7Diag(newdiag);
+    printf("\n");
+    genTranspose(newdiag, newtransp);
+    print7Diag(newtransp);
     /*LIKWID_MARKER_INIT;
     srandom(20252);
     int status = 0;

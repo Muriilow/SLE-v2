@@ -118,9 +118,12 @@ void gen7Diagonal(struct diag7 *SL){
     SL->B[n-3] = genRandomB(7);
     SL->B[n-2] = genRandomB(7);
     SL->B[n-1] = genRandomB(7);
-    
 }
 
+
+
+
+//ver com o professor como fazer isso, a simetrica positiva tem 2 diagonais a mais
 int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time)
 {
     struct Matrix *A = SL->A;
@@ -176,12 +179,54 @@ int genPreCond(struct Matrix *A, double w, int n, int k,
     return 0;
 }
 
+
+
+//não sei o que faço com B depois de Transpor, talvez separar o B pro SL e não pra diagonal
 void genTranspose(struct diag7 *A, struct diag7 *T)
-{   
-    *T->D1 = *A->D7;
-    *T->D2 = *A->D6;
-    *T->D3 = *A->D5;
+{       
+    int n = A->n;
+    T->n = n;
+    T->D1 = malloc(sizeof(double)*n);
+    T->D2 = malloc(sizeof(double)*n);
+    T->D3 = malloc(sizeof(double)*n);
+    T->D4 = malloc(sizeof(double)*n);
+    T->D5 = malloc(sizeof(double)*n);
+    T->D6 = malloc(sizeof(double)*n);
+    T->D7 = malloc(sizeof(double)*n);
+    T->B = malloc(sizeof(double)*n);
+
+    
+
+    for(int i = 0; i<n-3; i++){
+    T->D1[i+3] = A->D7[i];
+    T->D2[i+2] = A->D6[i];
+    T->D3[i+1] = A->D5[i];
+    T->D4[i] = A->D4[i];
+    T->D5[i] = A->D3[i+1];
+    T->D6[i] = A->D2[i+2];
+    T->D7[i] = A->D1[i+3];
+    T->B[i] = A->B[i];
+    }
+
+    T->D2[n-1] = A->D6[n-3];
+
+    T->D3[n-1] = A->D5[n-2];
+    T->D3[n-2] = A->D5[n-3];
+
+    T->D4[n-3] = A->D4[n-3];
+    T->D4[n-2] = A->D4[n-2];
+    T->D4[n-1] = A->D4[n-1];
+
+    T->D5[n-2] = A->D3[n-1];
+    T->D5[n-3] = A->D3[n-2];
+
+    T->D6[n-3] = A->D2[n-1];
+
+    T->B[n-1] = A->B[n-1];
+    T->B[n-2] = A->B[n-2];
+    T->B[n-3] = A->B[n-3];
 }
+
 
 int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, struct Matrix *M, double *time){
 
@@ -306,21 +351,37 @@ double calcNormaEuclidiana(double *x, int n){
     return sqrt(aux);
 }
 
-void calcResidue(struct LinearSis *SL, double *x, double *r, double *time)
+void calcResidue(struct diag7 *diag, double *x, double *r, double *time)
 {
     if (time)
         *time = timestamp();
 
-    uint n = SL->n;
+    uint n = diag->n;
     double sum = 0.0;
+        sum = x[0] * diag->D4[0] + x[1] * diag->D3[1] + x[2] * diag->D2[2] + x[3] * diag->D1[3];
+        r[0] = diag->B[0] - sum;
 
-    for (uint i = 0; i < n; i++) {
-        sum = 0.0;
-        for (uint j = 0; j < n; j++)
-            sum += SL->A->v[n*i + j] * x[j];
-    
-        r[i] = SL->b->v[i] - sum;
+        sum = x[0] * diag->D5[0] + x[1] * diag->D4[1] + x[2] * diag->D3[2] + x[3] * diag->D2[3] + x[4] * diag->D1[4];
+        r[1] = diag->B[1] - sum;
+
+        sum =x[0] * diag->D6[0] + x[1] * diag->D5[1] +  x[2] * diag->D4[2] + x[3] * diag->D3[3] + x[4] * diag->D2[4] + x[5] * diag->D1[5];
+        r[2] = diag->B[0] - sum;
+
+
+    for (uint i = 3; i < n-3; i++) {
+        sum = x[i-3] * diag->D7[i-3] + x[i-2] * diag->D6[i-2] + x[i-1] * diag->D5[i-1] + x[i] * diag->D4[i] + x[i+1] * diag->D3[i+1] + x[i+2] * diag->D2[i+2] + x[i+3] * diag->D1[i+3];
+        r[i] = diag->B[i] - sum;
     }
+
+        sum = x[n-6] * diag->D7[n-6] + x[n-5] * diag->D6[n-5] + x[n-4] * diag->D5[n-4] + x[n-3] * diag->D4[n-3] + x[n-2] * diag->D3[n-2] + x[n-1] * diag->D2[n-1];
+        r[n-3] = diag->B[n-3] - sum;
+
+        sum = x[n-5] * diag->D7[n-5] + x[n-4] * diag->D6[n-4] + x[n-3] * diag->D5[n-3] + x[n-2] * diag->D4[n-2] + x[n-1] * diag->D3[n-1];
+        r[n-2] = diag->B[n-2] - sum;
+
+        sum = x[n-4] * diag->D7[n-4] + x[n-3] * diag->D6[n-3] + x[n-2] * diag->D5[n-2] + x[n-1] * diag->D4[n-1];
+        r[n-1] = diag->B[n-1] - sum;
+
     if (time)
         *time = timestamp() - *time;
 }
@@ -436,6 +497,8 @@ void print7Diag(struct diag7 *SL){
     printf("  ] [ %10.6f ]\n", SL->B[n-1]);
 
 }
+
+
 /*ESSA FUNCAO MAIS GERAL FUNCIONA PARA MATRIZES E VETORES, MAS DEPENDE DE COMO O VETOR ESTA ORGANIZADO */
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C) {
     if(A->column != B->row)
