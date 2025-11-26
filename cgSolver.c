@@ -119,6 +119,8 @@ int main(){
     printf("%.8g\n", timeGrad);
     printf("%.8g\n", timeRes);
     
+    double timeAv = (timeGrad + timeRes) / 2;
+
     FILE* time;
 
     time = fopen("time.txt", "w");
@@ -128,8 +130,7 @@ int main(){
     }
     
     // Escrever no arquivo (similar ao printf)
-    fprintf(time, "%.8g\n", timeGrad);
-    fprintf(time, "%.8g\n", timeRes);
+    fprintf(time, "%.8g\n", timeAv);
     free(norma);
     free(X);
     free(av1);

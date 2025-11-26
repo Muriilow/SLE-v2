@@ -210,7 +210,7 @@ int conjGradientPre(struct LinearSis *SL, double *x, double *r,double *norma, st
 
         it++;
         diff = calcNormaMax(x, prevx, n); 
-    }while (it < maxit && diff >= eps);
+    }while (it < maxit);
 
     fprintf(stderr,"diff: %.8g\n",diff);
     fprintf(stderr,"it:%d\n",it);

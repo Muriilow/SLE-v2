@@ -5,6 +5,17 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+# This script run two versions of cgSolver and create gaphs based on the likwid output
+# To run this script you have to ensure that: 
+# 1. You need to have to binaries, "cgSolver1", "cgSolver2", it need to be this exactly name
+# 2. You need to have a directory caleed "Dados"
+# 3. You need to have all the files exactly named as the list options1
+# 4. Likwid has to installed on your machine 
+
+# I recommend you to compile the source C code of the old version and just move to this directory
+
+# Create a graph with the arrays "list_old" and "list_new"
 def create_graph(name, x, list_old, list_new):
     plt.figure(name)
     plt.plot(x, list_old)
@@ -16,7 +27,6 @@ def run_likwid(arg, version, option, file):
 
     command = "likwid-perfctr -C 0 -g " + arg + " -f -m -O ./cgSolver" + version 
 
-    # Writing the output from likwid-csv in the file
     try:
         with open(file, "w") as f:
             subprocess.run(command, 
@@ -29,6 +39,7 @@ def run_likwid(arg, version, option, file):
     except Exception as err:
         print(f"Erro ao executar comando: {err}")
 
+# Add the line content into the results dictionary 
 def check_info(operation, region, results, line):
     try:
         if region not in results[operation]:
@@ -86,7 +97,6 @@ def extract_output(file, results, check_time):
     print(results)
 
 if __name__ == "__main__":
-    # Dictionary that holds the useful information to make graphics
     results1 = {
         'flops_dp': {},
         'flops_avx': {},
@@ -102,9 +112,6 @@ if __name__ == "__main__":
         'time': {}
     }
 
-    # Arrays que contem cada valor para um SL de tamanho X
-    # O numero 1 representa a primeira versao do cgSolver 
-    # O numero 2 representa a segunda versao do cgSolver
     flops_dp1 = []
     flops_dp2 = []
     flops_avx1 = []
@@ -116,15 +123,10 @@ if __name__ == "__main__":
     time1 = []
     time2 = []
 
-    # Nomes dos arquivos que possuem os argumentos de entrada
-    options1 = ["COM_1.in", "COM_2.in", "COM_3.in", "COM_4.in", "COM_5.in"]
-    # options2 = ["SEM_1.in", "SEM_2.in", "SEM_3.in", "SEM_4.in", "SEM_5.in"]
+    options1 = ["COM_1.in", "COM_2.in", "COM_3.in", "COM_4.in", "COM_5.in", "COM_6.in", "COM_7.in", "COM_8.in", "COM_9.in"]
 
-    # Tamanho do SL 
-    x = [32, 64, 128, 256, 512]
+    x = [32, 64, 128, 256, 512, 1000, 2000, 4000, 8000]
 
-    # Para cada arquivo do array options1, vamos executar o likwid para cada tipo
-    # E salvar os resultados
     for file in options1:
         with open("Dados/" + file, "r") as f: 
             option = f.read()
@@ -165,6 +167,7 @@ if __name__ == "__main__":
     print(flops_avx1)
     print(mem1)
     print(miss1)
+    print(time1)
 
     create_graph("FLOPS_DP", x, flops_dp1, flops_dp2)
     create_graph("FLOPS_AVX", x, flops_avx1, flops_avx2)
