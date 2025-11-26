@@ -111,14 +111,25 @@ int main(){
     LIKWID_MARKER_STOP("RES_1");
     
     printf("%d\n",n);
-    printVetor(X,n);;
+    printVetor(X,n);
     double normaR = calcNormaEuclidiana(r, n);
     printf("%.8g\n", *norma);
     printf("%.8g\n", normaR);
     printf("%.8g\n", timePC + timeM);
     printf("%.8g\n", timeGrad);
     printf("%.8g\n", timeRes);
+    
+    FILE* time;
 
+    time = fopen("time.txt", "w");
+    if (time == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return 1;
+    }
+    
+    // Escrever no arquivo (similar ao printf)
+    fprintf(time, "%.8g\n", timeGrad);
+    fprintf(time, "%.8g\n", timeRes);
     free(norma);
     free(X);
     free(av1);
