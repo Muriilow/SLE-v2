@@ -109,14 +109,28 @@ int main(){
     LIKWID_MARKER_START("RES_1");
     calcResidue(&SL, X, r, &timeRes);
     LIKWID_MARKER_STOP("RES_1");
-
+    
+    printf("%d\n",n);
+    printVetor(X,n);
     double normaR = calcNormaEuclidiana(r, n);
     printf("%.8g\n", *norma);
     printf("normaR %.8g\n", normaR);
     printf("%.8g\n", timePC + timeM);
     printf("%.8g\n", timeGrad);
     printf("%.8g\n", timeRes);
+    
+    double timeAv = (timeGrad + timeRes) / 2;
 
+    FILE* time;
+
+    time = fopen("time.txt", "w");
+    if (time == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return 1;
+    }
+    
+    // Escrever no arquivo (similar ao printf)
+    fprintf(time, "%.8g\n", timeAv);
     free(norma);
     free(X);
     free(av1);
