@@ -109,12 +109,10 @@ int main(){
     LIKWID_MARKER_START("RES_1");
     calcResidue(&SL, X, r, &timeRes);
     LIKWID_MARKER_STOP("RES_1");
-    
-    printf("%d\n",n);
-    printVetor(X,n);;
+
     double normaR = calcNormaEuclidiana(r, n);
     printf("%.8g\n", *norma);
-    printf("%.8g\n", normaR);
+    printf("normaR %.8g\n", normaR);
     printf("%.8g\n", timePC + timeM);
     printf("%.8g\n", timeGrad);
     printf("%.8g\n", timeRes);

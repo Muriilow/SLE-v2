@@ -8,15 +8,62 @@
 #include <likwid.h>
 int main(){
 
-    struct diag7* newdiag = malloc(sizeof(struct diag7));
-    struct diag7* newtransp = malloc(sizeof(struct diag7));
-    newdiag->n = 10;
+    struct LinearSis* newdiag = malloc(sizeof(struct LinearSis));
+    if(!newdiag){
+        fprintf(stderr, "fudeu\n");
+        return -1;
+    }
+    struct diagMat* sympos = malloc(sizeof(struct diagMat));
+    newdiag->n = 14;
+    newdiag->k = 7;
+    double* spb = calloc(14,sizeof(double));
+    double* M = calloc(14,sizeof(double));
     srandom(20252);
-    gen7Diagonal(newdiag);
-    print7Diag(newdiag);
-    printf("\n");
-    genTranspose(newdiag, newtransp);
-    print7Diag(newtransp);
+    genKDiagonal(newdiag);
+    print7Diag(newdiag->A, 7);
+    printVetor(newdiag->b,14);
+
+    genSymmetricPositive(newdiag, sympos, spb, NULL);
+    print7Diag(sympos, 13);
+    printVetor(spb,14);
+
+    genPreCond(sympos, -1, 14,M,NULL);
+    printf("\nM: ");
+    printVetor(M,14);
+
+    double* x = calloc(14,sizeof(double));
+    double* r = calloc(14,sizeof(double));
+    double* norma = calloc(14,sizeof(double));
+    double* time = calloc(14,sizeof(double));
+    conjGradientPre(sympos, spb, x, r, norma, M,time);
+
+    printf("=============================\n\nTestando no Simetrico positivol:\n");
+    printf("R: ");
+    printVetor(r,14);
+    printf("X: ");
+    printVetor(x,14);
+    printf("Bsp: ");
+    printVetor(spb,14);
+
+
+    calcResidue(newdiag->A, newdiag->b, 7, x, r, time);
+
+    print7Diag(newdiag->A, 7);
+    
+
+    printf("Testando no inicial:\n");
+    double NormaR = calcNormaEuclidiana(x, 14);
+     printf("R: ");
+    printVetor(r,14);
+    printf("X: ");
+    printVetor(x,14);
+    printf("B: ");
+    printVetor(newdiag->b,14);
+
+    printf("normaR: %.8g\n", NormaR);
+
+
+
     /*LIKWID_MARKER_INIT;
     srandom(20252);
     int status = 0;

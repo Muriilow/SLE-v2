@@ -17,7 +17,7 @@
  * */
 void genKDiagonal(struct LinearSis *SL);
 
-void gen7Diagonal(struct diag7 *SL);
+void gen7Diagonal(struct diagMat *SL);
 
 /*
  * Gera um sistema linear simetrico aplicando o metodo CGNE "A^t * Ax = A^t * b"
@@ -26,7 +26,7 @@ void gen7Diagonal(struct diag7 *SL);
  * @param bsp: Vetor b corrigido
  * @param Variavel para calcular o tempo
  * */
-int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix *bsp, double *time);
+int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp, double *time);
 
 /*
  * Gera os pre condicionamentos dependendo do valor de w 
@@ -37,14 +37,14 @@ int genSymmetricPositive(struct LinearSis *SL, struct Matrix *ASP, struct Matrix
  * @param M: Matriz preCond
  * @param time: Variavel para calcular o tempo
  * */
-int genPreCond(struct Matrix *A, double w, int n, int k, struct Matrix *M, double *time);
+int genPreCond(struct diagMat *A, double w, int n, double* M, double *time);
 
 /*
  * Gera a transposta da Matriz
  * @param A: Matriz A que gerara a transposta
  * @param AT: A matriz transposta
  * */
-void genTranspose(struct diag7 *A, struct diag7 *AT);
+void genTranspose(struct diagMat *A, struct diagMat *AT, int k);
 
 /*
  * Algoritmo que resolve Ax = b com o uso de pre condicionamento
@@ -57,7 +57,7 @@ void genTranspose(struct diag7 *A, struct diag7 *AT);
  * @param eps: Valor de parada
  * @param time: Variavel para calcular o tempo
  * */
-int conjGradientPre(struct LinearSis *SL, double *x, double *r, double *norma, struct Matrix *M, double* time);
+int conjGradientPre(struct diagMat *A, double *B, double *x, double *r,double *norma, double *M, double *time);
 
 /*
  * Algoritmo que retorna a maior diferença entre os elementos de dois vetores de tamanho n
@@ -81,7 +81,7 @@ double calcNormaEuclidiana(double *x, int n);
  * @param r: Vetor do residuo
  * @param time: Variavel para calcular o tempo
  * */
-void calcResidue(struct LinearSis *SL, double *x, double *r, double* time);
+void calcResidue(struct diagMat *A,double *B, int k, double *x, double *r, double *time);
 
 /*
  * Printa o vetor, debug
@@ -101,10 +101,16 @@ void printSis(struct LinearSis *SL);
  * @param A: Matriz A que sera multiplicada
  * @param B: Matriz B que sera multiplicada
  * @param C: Matriz resultado
- * */
+ * 
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
+*/
+void print7Diag(struct diagMat *SL, int k);
 
-void print7Diag(struct diag7 *SL);
+void square7diag(struct LinearSis *SL, struct diagMat *C, double* newB);
+
+void initDiag(struct diagMat* A, int k, int n);
+
+void multMatVet(struct diagMat *A, double *B, double *C, int k);
 
 #endif // __SISLIN_H__;
 
