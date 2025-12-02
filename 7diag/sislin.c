@@ -55,31 +55,31 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
         int offset = (i-half);
         for (uint j = 0; j < n ; j++){
             if (j+offset >= 0 && j+offset < n){
-                SL->A->Diags[i*n+j] = i+1;
-                //SL->A->Diags[i)*n+j] = genRandomA(j+offset,j,k);
+                //SL->A->Diags[i*n+j] = i*n+j;
+                SL->A->Diags[i*n+j] = genRandomA(j+offset,j,k);
             } else{
                 SL->A->Diags[i*n+j] = 0.0;
             }
         } 
     }
-    //for (uint j = 0; j < n ; j++){
-        //SL->b[j] = 1; 
-        //SL->b[j] = genRandomB(k);
-    //}
-    SL->b[0] = 10;
-    SL->b[1] = 15;
-    SL->b[2] = 21;
-    SL->b[3] = 28;
-    SL->b[4] = 28;
-    SL->b[5] = 28;
-    SL->b[6] = 28;
-    SL->b[7] = 28;
-    SL->b[8] = 28;
-    SL->b[9] = 28;
-    SL->b[10] = 28;
-    SL->b[11] = 27;
-    SL->b[12] = 25;
-    SL->b[13] = 22;
+    for (uint j = 0; j < n ; j++){
+        SL->b[j] = 1; 
+        SL->b[j] = genRandomB(k);
+    }
+    /*SL->b[0] = 90;
+    SL->b[1] = 150;
+    SL->b[2] = 225;
+    SL->b[3] = 315;
+    SL->b[4] = 322;
+    SL->b[5] = 329;
+    SL->b[6] = 336;
+    SL->b[7] = 343;
+    SL->b[8] = 350;
+    SL->b[9] = 357;
+    SL->b[10] = 364;
+    SL->b[11] = 357;
+    SL->b[12] = 335;
+    SL->b[13] = 298;*/
 
 }
 
@@ -126,33 +126,34 @@ int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp,
         bsp[linha] = 0.0;   
         uint teste = 2*(linha - 3);
         for(uint i = 0; i < 7; i++){
-            linhaV[i] = A->Diags[(6-i)*n+(i+linha-3)];
+            linhaV[i] = A->Diags[i*n+linha];
             bsp[linha] += A->Diags[i*n+linha]*b[i+linha-3];
             //printf("bsp[%d](%f) = A[%d][%d](%f) * b[%d](%f)\n",linha,bsp[linha],i,linha,A->Diags[i*n+linha], i+linha-3,b[i+linha-3]);
         }
-        //printf("\n");
-        
+        //printf("linha %d:  ", linha);
+        //printVetor(linhaV, 7);
         //printf("bsp[%d](%f)\n",linha,bsp[linha]);
         for(uint col = 0; col <= n; col++){
             soma = 0.0;
             for(uint i = 0; i <= 3+linha; i++){
-                if(linha-teste+col-i >= 0 && linha-teste+col-i < 7 && i < 7 && linha-3+i < n){
-                    soma += linhaV[i] * A->Diags[(linha-teste+col-i)*n+(linha-3+i)];
-                    //printf("linha %d soma: %f = linhav[%d](%f) * diag[%d)*n+%d](%f)\n",linha,soma,i,linhaV[i], linha-teste+col-i, linha-3+i, A->Diags[(linha-teste+col-i)*n+linha-3+i]);
+                if(linha+i-col >= 0 && linha+i-col < 7 && i < 7 && linha-3 < n){
+                    soma += linhaV[i] * A->Diags[(linha+i-col)*n+col];
+                    //printf("linha %d soma: %f = linhav[%d](%f) * diag[%d][%d](%f)\n",linha,soma,i,linhaV[i], linha+i-col, col, A->Diags[(linha+i-col)*n+col]);
                 }
             }
             if(6-col+linha >= 0 && 6-col+linha < 13 && col < n){
-                //printf("diagASP[%d)*n+%d] = %f\n",6-col+linha,col,soma);
+                //printf("diagASP[%d][%d] = %f\n",6-col+linha,col,soma);
                 ASP->Diags[(6-col+linha)*n+col] = soma;
             }
+            //printf("\n");
         }
     }
 
     for(linha; linha < n; linha++){
         bsp[linha] = 0.0;
         for(uint i = 0; i < n+3-linha; i++){
-            linhaV[i] = A->Diags[(i)*n+linha-i];
-            bsp[linha] += A->Diags[(i)*n+linha-i]*b[linha-3+i];
+            linhaV[i] = A->Diags[(i)*n+linha];
+            bsp[linha] += A->Diags[(i)*n+linha]*b[linha-3+i];
             //printf("bsp[%d](%f) = A[%d][%d](%f) * b[%d](%f)\n",linha,bsp[linha],i,linha-i,A->Diags[(i)*n+linha-i], i+linha-3,b[i+linha-3]);
         }
         //printf("\n");
@@ -161,17 +162,19 @@ int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp,
         for(uint col = 0; col <= n; col++){
             soma = 0.0;
             for(uint i = 0; i <= n+2-linha; i++){
-                //printf("linha %d = linhav[%d] * diag[%d)*n+%d]\n", linha, i, col-i, linha-half+i);
+                //printf("linha %d = linhav[%d] * diag[%d][%d]\n", linha, i, col-i, linha-3+i);
                 if(6-col+i >= 0 && 6-col+i < 7){
-                    soma += linhaV[i] * A->Diags[(6-col+i)*n+(linha-3)];
-                    //printf("linha %d soma(%f)= linhav[%d](%f) * diag[%d][%d](%f)\n", linha,soma, i,linhaV[i], 6-col+i, linha-3,A->Diags[(6-col+i)*n+linha-3]);
+                    soma += linhaV[i] * A->Diags[(6-col+i)*n+(linha-6+col)];
+                    //printf("linha %d soma(%f)= linhav[%d](%f) * diag[%d][%d](%f)\n", linha,soma, i,linhaV[i], 6-col+i, linha-6+col,A->Diags[(6-col+i)*n+linha-6+col]);
                 }
             }
             if(12-col >= 0 && 12-col < 13 && linha+col-6 < n){
                //printf("diag[%d][%d] = %f\n",12-col,linha+col-6,soma);
                 ASP->Diags[(12-col)*n+(linha+col-6)] = soma;
             }
+            //printf("\n");
         }
+        
     }
 }   
 

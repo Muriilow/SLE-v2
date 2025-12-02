@@ -14,7 +14,7 @@ int main(){
         return -1;
     }
     struct diagMat* sympos = malloc(sizeof(struct diagMat));
-    newdiag->n = 14;
+    newdiag->n = 32;
     newdiag->k = 7;
     double* spb = calloc(14,sizeof(double));
     double* M = calloc(14,sizeof(double));
@@ -27,11 +27,13 @@ int main(){
     print7Diag(sympos, 13);
     //printVetor(spb,14);
 
-    genPreCond(sympos, -1, 14,M,NULL);
+    genPreCond(sympos, 0, 14,M,NULL);
     printf("\nM: ");
     printVetor(M,14);
 
     double* x = calloc(14,sizeof(double));
+    for(int i = 0; i < 14; i++)
+        x[i] = 0.5;
     double* r = calloc(14,sizeof(double));
     double* norma = calloc(14,sizeof(double));
     double* time = calloc(14,sizeof(double));
