@@ -15,9 +15,7 @@
  * Coloca valores x aleatorios no SL.
  * @param SL: Sistema linear a ser modificado
  * */
-void genKDiagonal(struct LinearSis *SL);
-
-void gen7Diagonal(struct diagMat *SL);
+void genKDiagonal(struct LinearSis *SL, uint k, uint n);
 
 /*
  * Gera um sistema linear simetrico aplicando o metodo CGNE "A^t * Ax = A^t * b"
@@ -37,14 +35,14 @@ int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp,
  * @param M: Matriz preCond
  * @param time: Variavel para calcular o tempo
  * */
-int genPreCond(struct diagMat *A, double w, int n, double* M, double *time);
+int genPreCond(struct diagMat *A, double w, uint n, double* M, double *time);
 
 /*
  * Gera a transposta da Matriz
  * @param A: Matriz A que gerara a transposta
  * @param AT: A matriz transposta
  * */
-void genTranspose(struct diagMat *A, struct diagMat *AT, int k);
+void genTranspose(struct diagMat *A, struct diagMat *AT, uint k);
 
 /*
  * Algoritmo que resolve Ax = b com o uso de pre condicionamento
@@ -65,14 +63,14 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r,double *n
  * @param y: Vetor para calcular a norma
  * @param n: Tamanho do Vetor
  * */
-double calcNormaMax(double *x, double *y, int n);
+double calcNormaMax(double *x, double *y, uint n);
 
 /*
  * Algoritmo que retorna a raiz da soma dos quadrados de um vetor
  * @param x: Vetor para calcular a norma
  * @param n: Tamanho do Vetor
  * */
-double calcNormaEuclidiana(double *x, int n);
+double calcNormaEuclidiana(double *x, uint n);
 
 /*
  * Algoritmo que calcula r = b - Ax
@@ -81,14 +79,14 @@ double calcNormaEuclidiana(double *x, int n);
  * @param r: Vetor do residuo
  * @param time: Variavel para calcular o tempo
  * */
-void calcResidue(struct diagMat *A,double *B, int k, double *x, double *r, double *time);
+void calcResidue(struct diagMat *A,double *B, uint k, double *x, double *r, double *time);
 
 /*
  * Printa o vetor, debug
  * @param vet: Vetor que sera printado
  * @param n: Quantidade de itens no vetor 
  * */
-void printVetor(double* vet, int n);
+void printVetor(double* vet, uint n);
 
 /*
  * Printa o SL
@@ -104,13 +102,13 @@ void printSis(struct LinearSis *SL);
  * 
 void multMatrix(struct Matrix *A, struct Matrix *B, struct Matrix *C);
 */
-void print7Diag(struct diagMat *SL, int k);
+void print7Diag(struct diagMat *SL, uint k);
 
 void square7diag(struct LinearSis *SL, struct diagMat *C, double* newB);
 
-void initDiag(struct diagMat* A, int k, int n);
+void inline static initDiag(struct diagMat* A, uint k, uint n);
 
-void multMatVet(struct diagMat *A, double *B, double *C, int k);
+void static multMatVet(struct diagMat *A, double *B, double *C, uint k);
 
 #endif // __SISLIN_H__;
 

@@ -1,5 +1,15 @@
 Modificações feitas - Murilo Bob 
 
+Remoção de diagonais nulas na estrutura do sistema linear; ok
+Uso de desenrolamento de loops unroll; <- só dps de corrigir a diferença entre residuo da sympos e inicial
+Uso de unsigned int quando necessário; ok 
+Remoção de cálculos matemáticos pesados;
+Diminuição de if statements em loops; ok -> separar casos de inicio meio e fim(acho que da pra melhor bastante aqui)
+Uso de funções inline; ok
+Uso de declarações estáticas. ok
+vetorização de matriz.
+
+
 1. Modificar todos os int para unsigned ints quando possivel, seguindo (TODO: LINK)
 
 # Solução de sistemas lineares esparsos usando Pré-condicionadores

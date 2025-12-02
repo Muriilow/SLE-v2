@@ -10,7 +10,7 @@ int main(){
 
     struct LinearSis* newdiag = malloc(sizeof(struct LinearSis));
     if(!newdiag){
-        fprintf(stderr, "fudeu\n");
+        fprintf(stderr, "\n");
         return -1;
     }
     struct diagMat* sympos = malloc(sizeof(struct diagMat));
@@ -19,13 +19,13 @@ int main(){
     double* spb = calloc(14,sizeof(double));
     double* M = calloc(14,sizeof(double));
     srandom(20252);
-    genKDiagonal(newdiag);
-    print7Diag(newdiag->A, 7);
-    printVetor(newdiag->b,14);
+    genKDiagonal(newdiag, 7, 14);
+    //print7Diag(newdiag->A, newdiag->k);
+    //printVetor(newdiag->b,newdiag->n);
 
     genSymmetricPositive(newdiag, sympos, spb, NULL);
     print7Diag(sympos, 13);
-    printVetor(spb,14);
+    //printVetor(spb,14);
 
     genPreCond(sympos, -1, 14,M,NULL);
     printf("\nM: ");
@@ -38,6 +38,7 @@ int main(){
     conjGradientPre(sympos, spb, x, r, norma, M,time);
 
     printf("=============================\n\nTestando no Simetrico positivol:\n");
+    calcResidue(sympos, spb, 13, x, r, NULL);
     printf("R: ");
     printVetor(r,14);
     printf("X: ");
@@ -45,7 +46,7 @@ int main(){
     printf("Bsp: ");
     printVetor(spb,14);
 
-
+    printf("OI=============================================================\n");
     calcResidue(newdiag->A, newdiag->b, 7, x, r, time);
 
     print7Diag(newdiag->A, 7);

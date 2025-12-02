@@ -21,7 +21,7 @@ struct LinearSis {
 };
 
 struct diagMat {
-  double** Diags;
+  double* Diags;
   int n;
 };
 // Valor absoluto de um número. Alternativa ao uso da função 'fabs()'
