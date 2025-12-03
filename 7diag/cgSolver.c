@@ -7,61 +7,77 @@
 #include "sislin.h"
 #include <likwid.h>
 int main(){
+    uint n = 100;
 
-    struct LinearSis* newdiag = malloc(sizeof(struct LinearSis));
+    struct LinearSis* newdiag = aligned_alloc(32,sizeof(struct LinearSis));
     if(!newdiag){
         fprintf(stderr, "\n");
         return -1;
     }
     struct diagMat* sympos = malloc(sizeof(struct diagMat));
-    newdiag->n = 32;
+    newdiag->n = n;
     newdiag->k = 7;
-    double* spb = calloc(14,sizeof(double));
-    double* M = calloc(14,sizeof(double));
+    double* spb = calloc(n,sizeof(double));
+    double* M = calloc(n,sizeof(double));
     srandom(20252);
-    genKDiagonal(newdiag, 7, 14);
+    printf("Generating...\n");
+    genKDiagonal(newdiag, 7, newdiag->n);
     //print7Diag(newdiag->A, newdiag->k);
     //printVetor(newdiag->b,newdiag->n);
 
+    printf("Sympos...\n");
     genSymmetricPositive(newdiag, sympos, spb, NULL);
-    print7Diag(sympos, 13);
-    //printVetor(spb,14);
+    //print7Diag(sympos, 13);
+    //printVetor(spb,n);
 
-    genPreCond(sympos, 0, 14,M,NULL);
+    printf("Pre-conditioner...\n");
+    genPreCond(sympos, 0, n,M,NULL);
     printf("\nM: ");
-    printVetor(M,14);
+    printVetor(M,n);
 
-    double* x = calloc(14,sizeof(double));
-    for(int i = 0; i < 14; i++)
-        x[i] = 0.5;
-    double* r = calloc(14,sizeof(double));
-    double* norma = calloc(14,sizeof(double));
-    double* time = calloc(14,sizeof(double));
-    conjGradientPre(sympos, spb, x, r, norma, M,time);
+    double* x = calloc(n,sizeof(double));
+    double* r = calloc(n,sizeof(double));
+    double* norma = calloc(n,sizeof(double));
+    double* time = calloc(n,sizeof(double));
+    printf("Conjugate gradient... \n");
+    conjGradientPre(sympos, spb, x, r, M,time);
 
     printf("=============================\n\nTestando no Simetrico positivol:\n");
     calcResidue(sympos, spb, 13, x, r, NULL);
-    printf("R: ");
-    printVetor(r,14);
-    printf("X: ");
-    printVetor(x,14);
-    printf("Bsp: ");
-    printVetor(spb,14);
+    //printf("R: ");
+    //printVetor(r,n);
+    //printf("X: ");
+    //printVetor(x,n);
+    //printf("Bsp: ");
+    //printVetor(spb,n);
 
-    printf("OI=============================================================\n");
+    printf("=============================================================\n");
     calcResidue(newdiag->A, newdiag->b, 7, x, r, time);
 
-    print7Diag(newdiag->A, 7);
+    //print7Diag(newdiag->A, 7);
     
+    conjGradientPre(sympos, spb, x, r, M,time);
+
+    printf("=============================\n\nTestando no Simetrico positivol:\n");
+    calcResidue(sympos, spb, 13, x, r, NULL);
+    //printf("R: ");
+    //printVetor(r,n);
+    //printf("X: ");
+    //printVetor(x,n);
+    //printf("Bsp: ");
+    //printVetor(spb,n);
+
+    printf("=============================================================\n");
+    calcResidue(newdiag->A, newdiag->b, 7, x, r, time);
 
     printf("Testando no inicial:\n");
-    double NormaR = calcNormaEuclidiana(x, 14);
-     printf("R: ");
-    printVetor(r,14);
+    double NormaR = calcNormaEuclidiana(r, n);
+    printf("R: ");
+    printVetor(r,n);
     printf("X: ");
-    printVetor(x,14);
-    printf("B: ");
-    printVetor(newdiag->b,14);
+    printVetor(x,n);
+    //printf("B: ");
+    //printVetor(newdiag->b,n);
 
     printf("normaR: %.8g\n", NormaR);
 
