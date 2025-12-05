@@ -85,21 +85,23 @@ int main(){
     
     printf("normaR: %.8g\n", NormaR);
 
-    //Printing the averaage time 
-    double timeAv = (timeGrad + timeRes) / 2;
-    FILE* time;
+    FILE* timeExec = fopen("timeExec2.txt", "w");
+    FILE* timeResi = fopen("timeRes2.txt", "w");
 
-    time = fopen("time.txt", "w");
-    if (time == NULL) {
+    if (!timeExec || !timeRes) {
         printf("Erro ao abrir o arquivo!\n");
         return 1;
     }
     
     // Escrever no arquivo (similar ao printf)
-    fprintf(time, "%.8g\n", timeAv);
+    fprintf(timeExec, "%.8g\n", timeGrad);
+    fprintf(timeResi, "%.8g\n", timeRes);
 
     LIKWID_MARKER_CLOSE;
     
+    fclose(timeExec);
+    fclose(timeResi);
+
     free(x);
     free(r);
     free(sympos);

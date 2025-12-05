@@ -31,7 +31,6 @@ void inline static initDiag(struct diagMat* A, uint k, uint n){
     A->n = n;
 
 }
-
 static double sqrVector(double* x, double* y, uint n){
     double sqrVector = 0;
     for (uint i = 0; i < n; i++){
@@ -43,9 +42,10 @@ static double sqrVector(double* x, double* y, uint n){
 void genKDiagonal(struct LinearSis *SL, uint k, uint n){
     uint half = k/2;
     SL->k = k;
-    SL->A =malloc(sizeof(struct diagMat));
-    initDiag(SL->A, k, n);
     SL->b = malloc(sizeof(double)*n);
+    SL->A = malloc(sizeof(struct diagMat));
+    SL->A->Diags = malloc(sizeof(double*)*k*n);
+    SL->A->n = n;
 
 
     for (uint i = 0; i < k; i++){
@@ -253,9 +253,9 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
         deltaOld = deltaNew;
 
         it++;
-        tIter = timestamp() - tIter;
     }while (it < 25);
 
+    tIter = timestamp() - tIter;
     *time = tIter/it;
 
     free(Yv);
