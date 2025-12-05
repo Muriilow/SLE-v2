@@ -51,43 +51,47 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
     SL->A->n = n;
     SL->b = aligned_alloc(32,sizeof(double)*n);
 
-
+    int N = (int)n;
+    int offset;
+    int j, j0, j1, j2, j3, j4, j5, j6, j7;
+    uint diagonal;
+    uint pos;
     for (uint i = 0; i < k; i++){
-        uint diagonal = (i*n); 
-        int offset = (i-half);
-        uint j;
-        for (uint i = 0; i < k; i++){
-            uint diagonal = (i*n); 
-            int offset = (i-half);
-            uint j;
-            for (j = 0; j < n - n%UNROLL ; j += UNROLL){
-                int j0 = (int)j + offset;
-                int j1 = (int)j + offset + 1;
-                int j2 = (int)j + offset + 2;
-                int j3 = (int)j + offset + 3;
-                int j4 = (int)j + offset + 4;
-                int j5 = (int)j + offset + 5;
-                int j6 = (int)j + offset + 6;
-                int j7 = (int)j + offset + 7;
+        diagonal = (i*n); 
+        offset = (i-half);
 
-                SL->A->Diags[diagonal+j  ] = (j0 >= 0 && j0 < (int)n) ? genRandomA(j0, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+1] = (j1 >= 0 && j1 < (int)n) ? genRandomA(j1, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+2] = (j2 >= 0 && j2 < (int)n) ? genRandomA(j2, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+3] = (j3 >= 0 && j3 < (int)n) ? genRandomA(j3, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+4] = (j4 >= 0 && j4 < (int)n) ? genRandomA(j4, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+5] = (j5 >= 0 && j5 < (int)n) ? genRandomA(j5, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+6] = (j6 >= 0 && j6 < (int)n) ? genRandomA(j6, j, k) : 0.0;
-                SL->A->Diags[diagonal+j+7] = (j7 >= 0 && j7 < (int)n) ? genRandomA(j7, j, k) : 0.0;
+        for (uint l = 0; l < k; l++){
+            diagonal = (l*n); 
+            offset = (l-half);
+            pos = diagonal + j;
+
+            for (uint j = 0; j < n - n % UNROLL; j += UNROLL){
+                j0 = j + offset;
+                j1 = j + offset + 1;
+                j2 = j + offset + 2;
+                j3 = j + offset + 3;
+                j4 = j + offset + 4;
+                j5 = j + offset + 5;
+                j6 = j + offset + 6;
+                j7 = j + offset + 7;
+
+                SL->A->Diags[pos  ] = (j0 >= 0 && j0 < N) ? genRandomA(j0, j, k) : 0.0;
+                SL->A->Diags[pos+1] = (j1 >= 0 && j1 < N) ? genRandomA(j1, j, k) : 0.0;
+                SL->A->Diags[pos+2] = (j2 >= 0 && j2 < N) ? genRandomA(j2, j, k) : 0.0;
+                SL->A->Diags[pos+3] = (j3 >= 0 && j3 < N) ? genRandomA(j3, j, k) : 0.0;
+                SL->A->Diags[pos+4] = (j4 >= 0 && j4 < N) ? genRandomA(j4, j, k) : 0.0;
+                SL->A->Diags[pos+5] = (j5 >= 0 && j5 < N) ? genRandomA(j5, j, k) : 0.0;
+                SL->A->Diags[pos+6] = (j6 >= 0 && j6 < N) ? genRandomA(j6, j, k) : 0.0;
+                SL->A->Diags[pos+7] = (j7 >= 0 && j7 < N) ? genRandomA(j7, j, k) : 0.0;
             } 
-            for (; j < n; j++) {
+            for (uint j = n - n%UNROLL; j < n; j++) {
                 int jj = (int)j + offset;
                 SL->A->Diags[diagonal + j] = (jj >= 0 && jj < (int)n) ? genRandomA(jj, j, k) : 0.0;
             }
         }
     }
-    uint j = 0;
-    for(j; j<n%UNROLL; j+=UNROLL){
-        SL->b[j] = genRandomB(k);
+    for(uint j = 0; j < n - n % UNROLL; j += UNROLL){
+        SL->b[j  ] = genRandomB(k);
         SL->b[j+1] = genRandomB(k);
         SL->b[j+2] = genRandomB(k);
         SL->b[j+3] = genRandomB(k);
@@ -97,7 +101,7 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
         SL->b[j+7] = genRandomB(k);
     }
 
-    for (j; j < n ; j++){
+    for (uint j = n - n % UNROLL; j < n ; j++){
         SL->b[j] = genRandomB(k);
     }
 }
@@ -242,7 +246,7 @@ int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *rest
     }
 
     // Y para calcular o SL com condicionador
-    for (i = 0; i < n - n%UNROLL; i+=UNROLL)
+    for (i = 0; i < n - n%UNROLL; i+=UNROLL) {
         Yv[i  ] = M[i  ] * r[i  ]; // y = M^-1 * r
         Yv[i+1] = M[i+1] * r[i+1];
         Yv[i+2] = M[i+2] * r[i+2];
@@ -251,6 +255,7 @@ int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *rest
         Yv[i+5] = M[i+5] * r[i+5];
         Yv[i+6] = M[i+6] * r[i+6];
         Yv[i+7] = M[i+7] * r[i+7];
+    }
 
     for (; i < n; i++)
         Yv[i] = M[i] * r[i]; // y = M^-1 * r
