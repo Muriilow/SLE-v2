@@ -57,7 +57,7 @@ void genTranspose(struct diagMat *A, struct diagMat *AT, uint k);
  * @param eps: Valor de parada
  * @param time: Variavel para calcular o tempo
  * */
-int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *restrict x, double *restrict r, double *restrict M, double *restrict time);
+int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *M, double *time);
 
 /*
  * Algoritmo que retorna a maior diferença entre os elementos de dois vetores de tamanho n
@@ -81,7 +81,7 @@ double calcNormaEuclidiana(double *x, uint n);
  * @param r: Vetor do residuo
  * @param time: Variavel para calcular o tempo
  * */
-void calcResidue(struct diagMat *restrict A,double *restrict B, uint k, double *restrict x, double *restrict r, double *time);
+void calcResidue(struct diagMat *A,double *B, uint k, double *x, double *r, double *time);
 
 /*
  * Printa o vetor, debug

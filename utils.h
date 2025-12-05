@@ -33,6 +33,7 @@ struct diagMat {
 #define isPot2(n) (n && !(n & (n - 1)))
 
 // Funções
+;
 double timestamp(void);
 char* markerName(char* baseName, int n);
 

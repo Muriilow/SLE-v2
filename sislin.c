@@ -25,13 +25,12 @@ static inline double genRandomB(uint k){
     return (double)(k<<2) * (double)random() * invRandMax;
 }
 
-static inline void initDiag(struct diagMat* A, uint k, uint n){
+void inline static initDiag(struct diagMat* A, uint k, uint n){
 
-    A->Diags = aligned_alloc(32, sizeof(double*)*k*n);
+    A->Diags = malloc(sizeof(double*)*k*n);
     A->n = n;
 
 }
-
 static double sqrVector(double* x, double* y, uint n){
     double sqrVector = 0;
     for (uint i = 0; i < n; i++){
@@ -40,71 +39,105 @@ static double sqrVector(double* x, double* y, uint n){
     return sqrVector;
 }
 
-
-
 void genKDiagonal(struct LinearSis *SL, uint k, uint n){
-   
     uint half = k/2;
     SL->k = k;
-    SL->A = aligned_alloc(32, sizeof(struct diagMat));
-    SL->A->Diags = aligned_alloc(32,sizeof(double*)*k*n);
+    SL->b = malloc(sizeof(double)*n);
+    SL->A = malloc(sizeof(struct diagMat));
+    SL->A->Diags = malloc(sizeof(double*)*k*n);
     SL->A->n = n;
-    SL->b = aligned_alloc(32,sizeof(double)*n);
 
-    int N = (int)n;
-    int offset;
-    int j, j0, j1, j2, j3, j4, j5, j6, j7;
-    uint diagonal;
-    uint pos;
+
     for (uint i = 0; i < k; i++){
-        diagonal = (i*n); 
-        offset = (i-half);
-
-        for (uint l = 0; l < k; l++){
-            diagonal = (l*n); 
-            offset = (l-half);
-            pos = diagonal + j;
-
-            for (uint j = 0; j < n - n % UNROLL; j += UNROLL){
-                j0 = j + offset;
-                j1 = j + offset + 1;
-                j2 = j + offset + 2;
-                j3 = j + offset + 3;
-                j4 = j + offset + 4;
-                j5 = j + offset + 5;
-                j6 = j + offset + 6;
-                j7 = j + offset + 7;
-
-                SL->A->Diags[pos  ] = (j0 >= 0 && j0 < N) ? genRandomA(j0, j, k) : 0.0;
-                SL->A->Diags[pos+1] = (j1 >= 0 && j1 < N) ? genRandomA(j1, j, k) : 0.0;
-                SL->A->Diags[pos+2] = (j2 >= 0 && j2 < N) ? genRandomA(j2, j, k) : 0.0;
-                SL->A->Diags[pos+3] = (j3 >= 0 && j3 < N) ? genRandomA(j3, j, k) : 0.0;
-                SL->A->Diags[pos+4] = (j4 >= 0 && j4 < N) ? genRandomA(j4, j, k) : 0.0;
-                SL->A->Diags[pos+5] = (j5 >= 0 && j5 < N) ? genRandomA(j5, j, k) : 0.0;
-                SL->A->Diags[pos+6] = (j6 >= 0 && j6 < N) ? genRandomA(j6, j, k) : 0.0;
-                SL->A->Diags[pos+7] = (j7 >= 0 && j7 < N) ? genRandomA(j7, j, k) : 0.0;
-            } 
-            for (uint j = n - n%UNROLL; j < n; j++) {
-                int jj = (int)j + offset;
-                SL->A->Diags[diagonal + j] = (jj >= 0 && jj < (int)n) ? genRandomA(jj, j, k) : 0.0;
+        int offset = (i-half);
+        for (uint j = 0; j < n ; j++){
+            if (j+offset >= 0 && j+offset < n){
+                SL->A->Diags[i*n+j] = genRandomA(j+offset,j,k);
+            } else{
+                SL->A->Diags[i*n+j] = 0.0;
             }
-        }
+        } 
     }
-    for(uint j = 0; j < n - n % UNROLL; j += UNROLL){
-        SL->b[j  ] = genRandomB(k);
-        SL->b[j+1] = genRandomB(k);
-        SL->b[j+2] = genRandomB(k);
-        SL->b[j+3] = genRandomB(k);
-        SL->b[j+4] = genRandomB(k);
-        SL->b[j+5] = genRandomB(k);
-        SL->b[j+6] = genRandomB(k);
-        SL->b[j+7] = genRandomB(k);
-    }
-
-    for (uint j = n - n % UNROLL; j < n ; j++){
+    for (uint j = 0; j < n ; j++){
+        SL->b[j] = 1; 
         SL->b[j] = genRandomB(k);
     }
 }
+
+int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp, double *time)
+{
+    struct diagMat* A = SL->A;
+    double* b = SL->b;
+    uint n = A->n;
+
+    uint linha = 0;
+    double linhaV[7];
+    int offset = (linha-3);
+    double soma = 0.0;
+    initDiag(ASP,13,n);
+
+    for(linha; linha <= 3; linha++){
+        bsp[linha] = 0;
+        for(uint i = 0; i <= 3+linha; i++){
+            linhaV[i] = A->Diags[(3-linha+i)*n+linha];
+            bsp[linha] += A->Diags[(3-linha+i)*n+linha]*b[i];
+        }
+
+        for(uint col = 0; col <= n; col++){
+            soma = 0.0;
+
+            for(uint i = 0; i <= 3+linha; i++){
+                if(3+i-col >= 0 && 3+i-col < 7 )
+                    soma += linhaV[i] * A->Diags[(3+i-col)*n+col];
+            }
+            if(6-col+linha >= 0 && 6-col+linha < n )
+                ASP->Diags[(6-col+linha)*n+col] = soma;
+        }
+    }
+
+    for(linha; linha < n-3; linha++){
+        bsp[linha] = 0.0;   
+        uint teste = 2*(linha - 3);
+
+        for(uint i = 0; i < 7; i++){
+            linhaV[i] = A->Diags[i*n+linha];
+            bsp[linha] += A->Diags[i*n+linha]*b[i+linha-3];
+        }
+
+        for(uint col = 0; col <= n; col++){
+            soma = 0.0;
+
+            for(uint i = 0; i <= 3+linha; i++){
+                if(linha+i-col >= 0 && linha+i-col < 7 && i < 7 && linha-3 < n)
+                    soma += linhaV[i] * A->Diags[(linha+i-col)*n+col];
+            }
+
+            if(6-col+linha >= 0 && 6-col+linha < 13 && col < n)
+                ASP->Diags[(6-col+linha)*n+col] = soma;
+        }
+    }
+
+    for(linha; linha < n; linha++){
+        bsp[linha] = 0.0;
+
+        for(uint i = 0; i < n+3-linha; i++){
+            linhaV[i] = A->Diags[(i)*n+linha];
+            bsp[linha] += A->Diags[(i)*n+linha]*b[linha-3+i];
+        }
+
+        for(uint col = 0; col <= n; col++){
+            soma = 0.0;
+
+            for(uint i = 0; i <= n+2-linha; i++){
+                if(6-col+i >= 0 && 6-col+i < 7)
+                    soma += linhaV[i] * A->Diags[(6-col+i)*n+(linha-6+col)];
+            }
+
+            if(12-col >= 0 && 12-col < 13 && linha+col-6 < n)
+                ASP->Diags[(12-col)*n+(linha+col-6)] = soma;
+        }
+    }
+}   
 
 int genSymmetricPositive(struct LinearSis *restrict SL, struct diagMat *restrict ASP, double *restrict bsp, double *restrict time)
 {
@@ -179,12 +212,12 @@ int genSymmetricPositive(struct LinearSis *restrict SL, struct diagMat *restrict
 
 
 /*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
-int genPreCond(struct diagMat *restrict A, double w, uint n,
-        double *restrict M, double *restrict time)
+int genPreCond(struct diagMat *A, double w, uint n,
+        double* M, double *time)
 {   
     if (w == -1)
         for(uint i = 0; i < n; i++){
-            if(A->Diags[6*n+i] <= 0) { //Matriz nao positiva definida 
+            if(A->Diags[6*n+i] <= 0) { 
                 fprintf(stderr, "ERRO: A[6)*n+%d] = %f -> A não é definida positiva\n", i, A->Diags[4*n+i]);
                 return -2; 
             }
@@ -196,7 +229,7 @@ int genPreCond(struct diagMat *restrict A, double w, uint n,
         *time = timestamp();
     if (w == 0)
         for(uint i = 0; i < n; i++){
-            if(A->Diags[6*n+i] <= 0) { //Matriz nao positiva definida 
+            if(A->Diags[6*n+i] <= 0) {
                 fprintf(stderr, "ERRO: A[6)*n+%d] = %f -> A não é definida positiva\n", i, A->Diags[4*n+i]);
                 return -2; 
             }
@@ -209,19 +242,18 @@ int genPreCond(struct diagMat *restrict A, double w, uint n,
     return 0;
 }
 
-int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *restrict x, double *restrict r, double *restrict M, double *restrict time){
-    //d = v1; c = v2
+int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *M, double *time){
     calcResidue(A, B, 13, x, r, NULL);
 
     uint n = A->n;
 
     // Y para calcular o SL com condicionador
-    double *Yv = aligned_alloc(32,n * sizeof(double)); 
+    double *Yv = malloc(n * sizeof(double)); 
 
     
     //Criando a matriz d e c usados para calculos
-    double *d = aligned_alloc(32,n * sizeof(double));
-    double *c = aligned_alloc(32,n * sizeof(double));
+    double *d = calloc(n,sizeof(double));
+    double *c = malloc(n * sizeof(double));
 
     if(!d || !Yv || !c){
         free(d);
@@ -246,33 +278,11 @@ int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *rest
     }
 
     // Y para calcular o SL com condicionador
-    for (i = 0; i < n - n%UNROLL; i+=UNROLL) {
-        Yv[i  ] = M[i  ] * r[i  ]; // y = M^-1 * r
-        Yv[i+1] = M[i+1] * r[i+1];
-        Yv[i+2] = M[i+2] * r[i+2];
-        Yv[i+3] = M[i+3] * r[i+3];
-        Yv[i+4] = M[i+4] * r[i+4];
-        Yv[i+5] = M[i+5] * r[i+5];
-        Yv[i+6] = M[i+6] * r[i+6];
-        Yv[i+7] = M[i+7] * r[i+7];
-    }
-
-    for (; i < n; i++)
+    for (uint i = 0; i < n; i++)
         Yv[i] = M[i] * r[i]; // y = M^-1 * r
 
-
     //Criando a matriz d e c usados para calculos
-    for (i = 0; i < n-n%UNROLL; i+=UNROLL){
-        d[i  ] = Yv[i  ];    
-        d[i+1] = Yv[i+1];   
-        d[i+2] = Yv[i+2];   
-        d[i+3] = Yv[i+3];   
-        d[i+4] = Yv[i+4];   
-        d[i+5] = Yv[i+5];   
-        d[i+6] = Yv[i+6];   
-        d[i+7] = Yv[i+7];    
-    }
-    for (; i < n; i++)
+    for (uint i = 0; i < n; i++)
         d[i] = Yv[i];
 
     
@@ -284,29 +294,16 @@ int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *rest
     double beta = 0.0;
     double tIter = timestamp();
     uint it = 1;
-    uint j = 0;
     deltaOld = sqrVector(r, Yv, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
 
     do {
         //Calculando ak = rk * rkt / dkt * A * dk 
         multMatVet(A, d, c, 13); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
-
        
         //Fazemos a multiplicacao de matrizes manual, ja q n vou criar outro vetor
         cAd = 0.0;
-        for (j = 0; j < n - n%UNROLL; j+=UNROLL){
-            cAd += c[j]*d[j];
-            cAd += c[j+1]*d[j+1];
-            cAd += c[j+2]*d[j+2];
-            cAd += c[j+3]*d[j+3];
-            cAd += c[j+4]*d[j+4];
-            cAd += c[j+5]*d[j+5];
-            cAd += c[j+6]*d[j+6];
-            cAd += c[j+7]*d[j+7];
-        }
-        for (; j < n; j++){
-            cAd += c[j]*d[j];
-        }
+        for (uint i = 0; i < n; i++) 
+            cAd += c[i]*d[i];
 
         if(cAd == 0){
             free(Yv);
@@ -325,51 +322,14 @@ int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *rest
             Yv[j] = M[j] * r[j];  // y = M⁻¹ * r
             deltaNew += Yv[j] * r[j];
 
-            x[j+1] += alpha * d[j+1]; //Xk+1 = Xk + akdk
-            r[j+1] -= alpha * c[j+1]; //rk+1 = rk - akAdk
-            Yv[j+1] = M[j+1] * r[j+1];  // y = M⁻¹ * r
-            deltaNew += Yv[j+1] * r[j+1];
-
-            x[j+2] += alpha * d[j+2]; //Xk+1 = Xk + akdk
-            r[j+2] -= alpha * c[j+2]; //rk+1 = rk - akAdk
-            Yv[j+2] = M[j+2] * r[j+2];  // y = M⁻¹ * r
-            deltaNew += Yv[j+2] * r[j+2];
-
-            x[j+3] += alpha * d[j+3]; //Xk+1 = Xk + akdk
-            r[j+3] -= alpha * c[j+3]; //rk+1 = rk - akAdk
-            Yv[j+3] = M[j+3] * r[j+3];  // y = M⁻¹ * r
-            deltaNew += Yv[j+3] * r[j+3];
-
-            x[j+4] += alpha * d[j+4]; //Xk+1 = Xk + akdk
-            r[j+4] -= alpha * c[j+4]; //rk+1 = rk - akAdk
-            Yv[j+4] = M[j+4] * r[j+4];  // y = M⁻¹ * r
-            deltaNew += Yv[j+4] * r[j+4];
-
-            x[j+5] += alpha * d[j+5]; //Xk+1 = Xk + akdk
-            r[j+5] -= alpha * c[j+5]; //rk+1 = rk - akAdk
-            Yv[j+5] = M[j+5] * r[j+5];  // y = M⁻¹ * r
-            deltaNew += Yv[j+5] * r[j+5];
-
-            x[j+6] += alpha * d[j+6]; //Xk+1 = Xk + akdk
-            r[j+6] -= alpha * c[j+6]; //rk+1 = rk - akAdk
-            Yv[j+6] = M[j+6] * r[j+6];  // y = M⁻¹ * r
-            deltaNew += Yv[j+6] * r[j+6];
-
-            x[j+7] += alpha * d[j+7]; //Xk+1 = Xk + akdk
-            r[j+7] -= alpha * c[j+7]; //rk+1 = rk - akAdk
-            Yv[j+7] = M[j+7] * r[j+7];  // y = M⁻¹ * r
-            deltaNew += Yv[j+7] * r[j+7];
-
-        }
-        for (; j < n; j++) {
-
             //Xk+1 = Xk + akdk
-            x[j] += alpha * d[j];
+            x[i] += alpha * d[i];
             //rk+1 = rk - akAdk
-            r[j] -= alpha * c[j];
-            Yv[j] = M[j] * r[j]; // y = M⁻¹ * r
+            r[i] -= alpha * c[i];
+            Yv[i] = M[i] * r[i]; // y = M⁻¹ * r
 
-            deltaNew += Yv[j] * r[j];
+            deltaNew += Yv[i] * r[i];
+            valueNew += r[i] * r[i];
         }
 
         if(deltaOld == 0){
@@ -377,25 +337,15 @@ int conjGradientPre(struct diagMat *restrict A, double *restrict B, double *rest
             return -1;
         }
         beta = deltaNew / deltaOld;
-        for(j = 0; j < n-n%UNROLL; j+=UNROLL){
-            d[j  ] = Yv[j  ] + beta * d[j  ];
-            d[j+1] = Yv[j+1] + beta * d[j+1];
-            d[j+2] = Yv[j+2] + beta * d[j+2];
-            d[j+3] = Yv[j+3] + beta * d[j+3];
-            d[j+4] = Yv[j+4] + beta * d[j+4];
-            d[j+5] = Yv[j+5] + beta * d[j+5];
-            d[j+6] = Yv[j+6] + beta * d[j+6];
-            d[j+7] = Yv[j+7] + beta * d[j+7];
-        }
-        for(;j<n;j++){
-            d[j] = Yv[j] + beta * d[j];
-        }
+        for(uint i = 0; i < n; i++)
+            d[i] = Yv[i] + beta * d[i];
+
         deltaOld = deltaNew;
 
         it++;
-        tIter = timestamp() - tIter;
     }while (it < 25);
 
+    tIter = timestamp() - tIter;
     *time = tIter/it;
 
     free(Yv);
@@ -428,7 +378,7 @@ double calcNormaEuclidiana(double *x, uint n){
     return sqrt(aux);
 }
 
-void calcResidue(struct diagMat *restrict A,double *restrict B,uint k, double *restrict x, double *restrict r, double *restrict time)
+void calcResidue(struct diagMat *A,double *B,uint k, double *x, double *r, double *time)
 { 
     uint n = A->n;
 
@@ -436,23 +386,11 @@ void calcResidue(struct diagMat *restrict A,double *restrict B,uint k, double *r
         *time = timestamp();
 
 
-    double* sum = aligned_alloc(32,sizeof(double)*n);
+    double* sum = malloc(sizeof(double)*n);
     multMatVet(A, x, sum, k);
 
-    uint i = 0;
-    for (; i < n - n%UNROLL; i+=UNROLL){
+    for (uint i = 0; i<n; i++)
         r[i]=B[i]-sum[i];
-        r[i+1]=B[i+1]-sum[i+1];
-        r[i+2]=B[i+2]-sum[i+2];
-        r[i+3]=B[i+3]-sum[i+3];
-        r[i+4]=B[i+4]-sum[i+4];
-        r[i+5]=B[i+5]-sum[i+5];
-        r[i+6]=B[i+6]-sum[i+6];
-        r[i+7]=B[i+7]-sum[i+7];
-    }
-    for(;i<n;i++){
-        r[i]=B[i]-sum[i];
-    }
 
     if (time)
         *time = timestamp() - *time;
@@ -493,14 +431,14 @@ void print7Diag(struct diagMat *SL, uint k){
             } 
         }
         for (j = 0 ;j < n-1-i-half; j++){
-            printf("       ");
+            printf("      ");
         }
         printf("  ]\n");
     }
 
     for(i; i<n-half; i++){
         for (j = 0 ;j < i-half; j++){
-            printf("       ");
+            printf("      ");
         }
         for(j = k-1; j >= 0; j--){
             if(i-(j-half) >= 0 && i-(j-half) < n){
@@ -508,13 +446,13 @@ void print7Diag(struct diagMat *SL, uint k){
             }
         }
         for (j = 0 ;j < n-1-i-half; j++){
-            printf("       ");
+            printf("      ");
         }
         printf("  ]\n");
     }
     for(i; i<n; i++){
         for (j = 0 ;j < i-half; j++){
-            printf("       ");
+            printf("      ");
         }
         for(j = k-1; j >= 0; j--){
             if(i-(j-half) >= 0 && i-(j-half) < n){
@@ -523,14 +461,6 @@ void print7Diag(struct diagMat *SL, uint k){
         }
     printf("  ]\n");
     }
-
-    /*for(uint i = 0; i < k; i++){
-        printf("diag %d:   ",i);
-        for(uint j = 0; j < n; j++){
-            printf("%f  ",SL->Diags[i*n+j]);
-        }
-        printf("\n");
-    }*/
 }
 
 
@@ -542,21 +472,24 @@ void static multMatVet(struct diagMat *A, double *B, double *C, uint k) {
 
     for(linha; linha <= half; linha++){
         C[linha] = 0.0;
-        for(uint i = 0; i <= half+linha; i++){
+
+        for(uint i = 0; i <= half+linha; i++)
             C[linha] += A->Diags[(half+linha-i)*n+i]*B[i];
-        }
+
     }
 
     for(linha; linha < n-half; linha++){
         C[linha] = 0.0;
-        for(uint i = 0; i < k; i++){
+
+        for(uint i = 0; i < k; i++)
             C[linha] += A->Diags[(k-1-i)*n+(i+linha-half)] * B[i+linha-half];
-        }
+
     }
     for(linha; linha < n; linha++){
         C[linha] = 0.0;
-        for(uint i = 0; i < n+half-linha; i++){
+
+        for(uint i = 0; i < n+half-linha; i++)
             C[linha] += A->Diags[(k-1-i)*n+linha-half+i] * B[linha-half+i];  
-        }
+
     }
 }
