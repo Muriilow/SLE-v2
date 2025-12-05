@@ -18,7 +18,7 @@ import numpy as np
 # Create a graph with the arrays "list_old" and "list_new"
 def create_graph(name, x, list_old, list_new):
     plt.figure(name)
-    plt.plot(x, list_old)
+    plt.plot(x, list_old, linestyle='--')
     plt.plot(x, list_new)
     plt.xscale('log')
 
@@ -123,9 +123,9 @@ if __name__ == "__main__":
     time1 = []
     time2 = []
 
-    options1 = ["COM_1.in", "COM_2.in", "COM_3.in", "COM_4.in", "COM_5.in", "COM_6.in", "COM_7.in", "COM_8.in", "COM_9.in"]
+    options1 = ["COM_1.in", "COM_2.in", "COM_3.in", "COM_4.in", "COM_5.in"]
 
-    x = [32, 64, 128, 256, 512, 1000, 2000, 4000, 8000]
+    x = [32, 64, 128, 256, 512]
 
     for file in options1:
         with open("Dados/" + file, "r") as f: 
