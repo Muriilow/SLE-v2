@@ -40,10 +40,7 @@ static double sqrVector(double* x, double* y, uint n){
     return sqrVector;
 }
 
-
-
 void genKDiagonal(struct LinearSis *SL, uint k, uint n){
-   
     uint half = k/2;
     SL->k = k;
     SL->A =malloc(sizeof(struct diagMat));
@@ -55,7 +52,6 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
         int offset = (i-half);
         for (uint j = 0; j < n ; j++){
             if (j+offset >= 0 && j+offset < n){
-                //SL->A->Diags[i*n+j] = i*n+j;
                 SL->A->Diags[i*n+j] = genRandomA(j+offset,j,k);
             } else{
                 SL->A->Diags[i*n+j] = 0.0;
@@ -66,21 +62,6 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
         SL->b[j] = 1; 
         SL->b[j] = genRandomB(k);
     }
-    /*SL->b[0] = 90;
-    SL->b[1] = 150;
-    SL->b[2] = 225;
-    SL->b[3] = 315;
-    SL->b[4] = 322;
-    SL->b[5] = 329;
-    SL->b[6] = 336;
-    SL->b[7] = 343;
-    SL->b[8] = 350;
-    SL->b[9] = 357;
-    SL->b[10] = 364;
-    SL->b[11] = 357;
-    SL->b[12] = 335;
-    SL->b[13] = 298;*/
-
 }
 
 int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp, double *time)
@@ -100,84 +81,63 @@ int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp,
         for(uint i = 0; i <= 3+linha; i++){
             linhaV[i] = A->Diags[(3-linha+i)*n+linha];
             bsp[linha] += A->Diags[(3-linha+i)*n+linha]*b[i];
-            //printf("linha[%d](%f) = A[%d][%d](%f)\n",i,linhaV[i],3-linha+i,linha,A->Diags[(3-linha+i)*n+linha]);
         }
-        //printf("\n");
-        //printf("linha %d:  ", linha);
-        //printVetor(linhaV, 7);
+
         for(uint col = 0; col <= n; col++){
             soma = 0.0;
-            //printf("col: %d\n", col);
+
             for(uint i = 0; i <= 3+linha; i++){
-                //printf("    i: %d\n", i);
-                if(3+i-col >= 0 && 3+i-col < 7 ){
+                if(3+i-col >= 0 && 3+i-col < 7 )
                     soma += linhaV[i] * A->Diags[(3+i-col)*n+col];
-                    //printf("soma: %f = linhav[%d](%f) * diag[%d][%d](%f)\n",soma,i,linhaV[i], 3+i-col,col, A->Diags[(3+i-col)*n+col]);
-                }
             }
-            if(6-col+linha >= 0 && 6-col+linha < n ){
-                //printf("diag[%d][%d] = %f\n",6-col+linha,col,soma);
+            if(6-col+linha >= 0 && 6-col+linha < n )
                 ASP->Diags[(6-col+linha)*n+col] = soma;
-            }
-            //printf("\n");
         }
     }
+
     for(linha; linha < n-3; linha++){
         bsp[linha] = 0.0;   
         uint teste = 2*(linha - 3);
+
         for(uint i = 0; i < 7; i++){
             linhaV[i] = A->Diags[i*n+linha];
             bsp[linha] += A->Diags[i*n+linha]*b[i+linha-3];
-            //printf("bsp[%d](%f) = A[%d][%d](%f) * b[%d](%f)\n",linha,bsp[linha],i,linha,A->Diags[i*n+linha], i+linha-3,b[i+linha-3]);
         }
-        //printf("linha %d:  ", linha);
-        //printVetor(linhaV, 7);
-        //printf("bsp[%d](%f)\n",linha,bsp[linha]);
+
         for(uint col = 0; col <= n; col++){
             soma = 0.0;
+
             for(uint i = 0; i <= 3+linha; i++){
-                if(linha+i-col >= 0 && linha+i-col < 7 && i < 7 && linha-3 < n){
+                if(linha+i-col >= 0 && linha+i-col < 7 && i < 7 && linha-3 < n)
                     soma += linhaV[i] * A->Diags[(linha+i-col)*n+col];
-                    //printf("linha %d soma: %f = linhav[%d](%f) * diag[%d][%d](%f)\n",linha,soma,i,linhaV[i], linha+i-col, col, A->Diags[(linha+i-col)*n+col]);
-                }
             }
-            if(6-col+linha >= 0 && 6-col+linha < 13 && col < n){
-                //printf("diagASP[%d][%d] = %f\n",6-col+linha,col,soma);
+
+            if(6-col+linha >= 0 && 6-col+linha < 13 && col < n)
                 ASP->Diags[(6-col+linha)*n+col] = soma;
-            }
-            //printf("\n");
         }
     }
 
     for(linha; linha < n; linha++){
         bsp[linha] = 0.0;
+
         for(uint i = 0; i < n+3-linha; i++){
             linhaV[i] = A->Diags[(i)*n+linha];
             bsp[linha] += A->Diags[(i)*n+linha]*b[linha-3+i];
-            //printf("bsp[%d](%f) = A[%d][%d](%f) * b[%d](%f)\n",linha,bsp[linha],i,linha-i,A->Diags[(i)*n+linha-i], i+linha-3,b[i+linha-3]);
         }
-        //printf("\n");
-        //printf("linha %d:  ", linha);
-        //printVetor(linhaV, 7);
+
         for(uint col = 0; col <= n; col++){
             soma = 0.0;
+
             for(uint i = 0; i <= n+2-linha; i++){
-                //printf("linha %d = linhav[%d] * diag[%d][%d]\n", linha, i, col-i, linha-3+i);
-                if(6-col+i >= 0 && 6-col+i < 7){
+                if(6-col+i >= 0 && 6-col+i < 7)
                     soma += linhaV[i] * A->Diags[(6-col+i)*n+(linha-6+col)];
-                    //printf("linha %d soma(%f)= linhav[%d](%f) * diag[%d][%d](%f)\n", linha,soma, i,linhaV[i], 6-col+i, linha-6+col,A->Diags[(6-col+i)*n+linha-6+col]);
-                }
             }
-            if(12-col >= 0 && 12-col < 13 && linha+col-6 < n){
-               //printf("diag[%d][%d] = %f\n",12-col,linha+col-6,soma);
+
+            if(12-col >= 0 && 12-col < 13 && linha+col-6 < n)
                 ASP->Diags[(12-col)*n+(linha+col-6)] = soma;
-            }
-            //printf("\n");
         }
-        
     }
 }   
-
 
 /*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
 int genPreCond(struct diagMat *A, double w, uint n,
@@ -185,7 +145,7 @@ int genPreCond(struct diagMat *A, double w, uint n,
 {   
     if (w == -1)
         for(uint i = 0; i < n; i++){
-            if(A->Diags[6*n+i] <= 0) { //Matriz nao positiva definida 
+            if(A->Diags[6*n+i] <= 0) { 
                 fprintf(stderr, "ERRO: A[6)*n+%d] = %f -> A não é definida positiva\n", i, A->Diags[4*n+i]);
                 return -2; 
             }
@@ -197,7 +157,7 @@ int genPreCond(struct diagMat *A, double w, uint n,
         *time = timestamp();
     if (w == 0)
         for(uint i = 0; i < n; i++){
-            if(A->Diags[6*n+i] <= 0) { //Matriz nao positiva definida 
+            if(A->Diags[6*n+i] <= 0) {
                 fprintf(stderr, "ERRO: A[6)*n+%d] = %f -> A não é definida positiva\n", i, A->Diags[4*n+i]);
                 return -2; 
             }
@@ -211,7 +171,6 @@ int genPreCond(struct diagMat *A, double w, uint n,
 }
 
 int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *M, double *time){
-    //d = v1; c = v2
     calcResidue(A, B, 13, x, r, NULL);
 
     uint n = A->n;
@@ -295,8 +254,6 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
 
         it++;
         tIter = timestamp() - tIter;
-        //printf("it: %d", it);
-        //printVetor(r,A->n);
     }while (it < 25);
 
     *time = tIter/it;
@@ -339,13 +296,11 @@ void calcResidue(struct diagMat *A,double *B,uint k, double *x, double *r, doubl
 
 
     double* sum = malloc(sizeof(double)*n);
-    //printf("\n\nRESIDUO\n");
     multMatVet(A, x, sum, k);
 
-    for (uint i = 0; i<n; i++){
+    for (uint i = 0; i<n; i++)
         r[i]=B[i]-sum[i];
-        //printf("r[%d](%f) = B[%d](%f) - r[%d](%f)\n",i,r[i],i,B[i],i,sum[i]);
-    }
+
     if (time)
         *time = timestamp() - *time;
 }
@@ -415,14 +370,6 @@ void print7Diag(struct diagMat *SL, uint k){
         }
     printf("  ]\n");
     }
-
-    /*for(uint i = 0; i < k; i++){
-        printf("diag %d:   ",i);
-        for(uint j = 0; j < n; j++){
-            printf("%f  ",SL->Diags[i*n+j]);
-        }
-        printf("\n");
-    }*/
 }
 
 
@@ -434,27 +381,24 @@ void static multMatVet(struct diagMat *A, double *B, double *C, uint k) {
 
     for(linha; linha <= half; linha++){
         C[linha] = 0.0;
-        for(uint i = 0; i <= half+linha; i++){
+
+        for(uint i = 0; i <= half+linha; i++)
             C[linha] += A->Diags[(half+linha-i)*n+i]*B[i];
-            //printf("C[%d](%.10g) = A[%d][%d](%.10g)*X[%d](%.10g)\n",linha,C[linha],(half+linha-i),+i, A->Diags[(half+linha-i)*n+i], i ,B[i]);
-        }
-        //printf("\n");
+
     }
 
     for(linha; linha < n-half; linha++){
         C[linha] = 0.0;
-        for(uint i = 0; i < k; i++){
+
+        for(uint i = 0; i < k; i++)
             C[linha] += A->Diags[(k-1-i)*n+(i+linha-half)] * B[i+linha-half];
-            //printf("C[%d](%.10g) = A[%d][%d](%.10g)*X[%d](%.10g)\n",linha,C[linha],(k-1-i),(i+linha-half), A->Diags[(k-1-i)*n+(i+linha-half)], i+linha-half,B[i+linha-half]);
-        }
-        //printf("\n");
+
     }
     for(linha; linha < n; linha++){
         C[linha] = 0.0;
-        for(uint i = 0; i < n+half-linha; i++){
+
+        for(uint i = 0; i < n+half-linha; i++)
             C[linha] += A->Diags[(k-1-i)*n+linha-half+i] * B[linha-half+i];  
-            //printf("C[%d](%.10g) = A[%d][%d](%.10g)*X[%d](%.10g)\n",linha,C[linha],(k-1-i),linha-half+i, A->Diags[(k-1-i)*n+linha-half+i], linha-half+i,B[linha-half+i]);
-        }
-        //printf("\n");
+
     }
 }
