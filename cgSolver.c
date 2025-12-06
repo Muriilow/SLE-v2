@@ -47,7 +47,6 @@ int main(){
     genKDiagonal(newdiag, k, n);
 
     genSymmetricPositive(newdiag, sympos, spb, NULL);
-    print7Diag(newdiag->A, k);
 
     genPreCond(sympos, w, n, M, NULL);
     printVetor(M,n);
