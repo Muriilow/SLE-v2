@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -O3 -march=native -mavx -fopt-info-vec -DLIKWID_PERFMON -I${LIKWID_INCLUDE}
+CFLAGS = -g -O3 -march=native -mavx -fopt-info-vec -DLIKWID_PERFMON -I${LIKWID_INCLUDE}
 LFLAGS = -lm -L${LIKWID_LIB} -llikwid
 
 PROG = cgSolver

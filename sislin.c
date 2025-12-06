@@ -44,8 +44,7 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
     SL->k = k;
     SL->b = malloc(sizeof(double)*n);
     SL->A = malloc(sizeof(struct diagMat));
-    SL->A->Diags = malloc(sizeof(double*)*k*n);
-    SL->A->n = n;
+    initDiag(SL->A,k,n);
 
 
     for (uint i = 0; i < k; i++){
@@ -59,7 +58,6 @@ void genKDiagonal(struct LinearSis *SL, uint k, uint n){
         } 
     }
     for (uint j = 0; j < n ; j++){
-        SL->b[j] = 1; 
         SL->b[j] = genRandomB(k);
     }
 }
@@ -190,13 +188,35 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
         fprintf(stderr, "Falha na alocação de memória\n");
         return -1;
     }
+    uint i = 0;
 
     // Y para calcular o SL com condicionador
-    for (uint i = 0; i < n; i++)
+    for (; i < n - n%UNROLL; i+=UNROLL){
+        Yv[i  ] = M[i  ] * r[i  ]; // y = M^-1 * r
+        Yv[i+1] = M[i+1] * r[i+1];
+        Yv[i+2] = M[i+2] * r[i+2];
+        Yv[i+3] = M[i+3] * r[i+3];
+        Yv[i+4] = M[i+4] * r[i+4];
+        Yv[i+5] = M[i+5] * r[i+5];
+        Yv[i+6] = M[i+6] * r[i+6];
+        Yv[i+7] = M[i+7] * r[i+7];
+    }
+    for (; i < n; i++)
         Yv[i] = M[i] * r[i]; // y = M^-1 * r
 
+
     //Criando a matriz d e c usados para calculos
-    for (uint i = 0; i < n; i++)
+    for (i = 0; i < n-n%UNROLL; i+=UNROLL){
+        d[i  ] = Yv[i  ];    
+        d[i+1] = Yv[i+1];   
+        d[i+2] = Yv[i+2];   
+        d[i+3] = Yv[i+3];   
+        d[i+4] = Yv[i+4];   
+        d[i+5] = Yv[i+5];   
+        d[i+6] = Yv[i+6];   
+        d[i+7] = Yv[i+7];    
+    }
+    for (; i < n; i++)
         d[i] = Yv[i];
 
     
@@ -205,20 +225,32 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
     double alpha; // ak
     double deltaOld = 0.0;
     double deltaNew = 0.0;
-    double valueNew = 0.0;
     double beta = 0.0;
     double tIter = timestamp();
     uint it = 1;
+    uint j = 0;
     deltaOld = sqrVector(r, Yv, n); //Como rk * rkt eh o quadrado nao precisamos multplicar matrizes
 
     do {
         //Calculando ak = rk * rkt / dkt * A * dk 
         multMatVet(A, d, c, 13); //Precisamos multiplicar matrizes pois A e d nao sao quadrados
+
        
         //Fazemos a multiplicacao de matrizes manual, ja q n vou criar outro vetor
         cAd = 0.0;
-        for (uint i = 0; i < n; i++) 
-            cAd += c[i]*d[i];
+        for (j = 0; j < n - n%UNROLL; j+=UNROLL){
+            cAd += c[j]*d[j];
+            cAd += c[j+1]*d[j+1];
+            cAd += c[j+2]*d[j+2];
+            cAd += c[j+3]*d[j+3];
+            cAd += c[j+4]*d[j+4];
+            cAd += c[j+5]*d[j+5];
+            cAd += c[j+6]*d[j+6];
+            cAd += c[j+7]*d[j+7];
+        }
+        for (; j < n; j++){
+            cAd += c[j]*d[j];
+        }
 
         if(cAd == 0){
             free(Yv);
@@ -228,18 +260,56 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
             return -1;
         }
         alpha = deltaOld / cAd; //Calculando ak
-       
+
         deltaNew = 0.0;
-        for (uint i = 0; i < n; i++) {
+        for(j = 0;j < n%UNROLL; j+=8){
+            
+            x[j  ] += alpha * d[j  ]; //Xk+1 = Xk + akdk
+            x[j+1] += alpha * d[j+1];
+            x[j+2] += alpha * d[j+2];
+            x[j+3] += alpha * d[j+3];
+            x[j+4] += alpha * d[j+4];
+            x[j+5] += alpha * d[j+5];
+            x[j+6] += alpha * d[j+6]; 
+            x[j+7] += alpha * d[j+7];
+
+            r[j  ] -= alpha * c[j  ]; //rk+1 = rk - akAdk
+            r[j+1] -= alpha * c[j+1];
+            r[j+2] -= alpha * c[j+2];
+            r[j+3] -= alpha * c[j+3];
+            r[j+4] -= alpha * c[j+4];
+            r[j+5] -= alpha * c[j+5];
+            r[j+6] -= alpha * c[j+6];
+            r[j+7] -= alpha * c[j+7];
+
+            Yv[j  ] = M[j  ] * r[j  ];  // y = M⁻¹ * r
+            Yv[j+1] = M[j+1] * r[j+1];  
+            Yv[j+2] = M[j+2] * r[j+2];  
+            Yv[j+3] = M[j+3] * r[j+3];  
+            Yv[j+4] = M[j+4] * r[j+4];  
+            Yv[j+5] = M[j+5] * r[j+5];  
+            Yv[j+6] = M[j+6] * r[j+6];  
+            Yv[j+7] = M[j+7] * r[j+7];
+
+            deltaNew += Yv[j  ] * r[j  ];
+            deltaNew += Yv[j+1] * r[j+1];
+            deltaNew += Yv[j+2] * r[j+2];
+            deltaNew += Yv[j+3] * r[j+3];
+            deltaNew += Yv[j+4] * r[j+4];
+            deltaNew += Yv[j+5] * r[j+5];
+            deltaNew += Yv[j+6] * r[j+6];
+            deltaNew += Yv[j+7] * r[j+7];
+
+        }
+        for (; j < n; j++) {
 
             //Xk+1 = Xk + akdk
-            x[i] += alpha * d[i];
+            x[j] += alpha * d[j];
             //rk+1 = rk - akAdk
-            r[i] -= alpha * c[i];
-            Yv[i] = M[i] * r[i]; // y = M⁻¹ * r
+            r[j] -= alpha * c[j];
+            Yv[j] = M[j] * r[j]; // y = M⁻¹ * r
 
-            deltaNew += Yv[i] * r[i];
-            valueNew += r[i] * r[i];
+            deltaNew += Yv[j] * r[j];
         }
 
         if(deltaOld == 0){
@@ -247,9 +317,19 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
             return -1;
         }
         beta = deltaNew / deltaOld;
-        for(uint i = 0; i < n; i++)
-            d[i] = Yv[i] + beta * d[i];
-
+        for(j = 0; j < n-n%UNROLL; j+=UNROLL){
+            d[j  ] = Yv[j  ] + beta * d[j  ];
+            d[j+1] = Yv[j+1] + beta * d[j+1];
+            d[j+2] = Yv[j+2] + beta * d[j+2];
+            d[j+3] = Yv[j+3] + beta * d[j+3];
+            d[j+4] = Yv[j+4] + beta * d[j+4];
+            d[j+5] = Yv[j+5] + beta * d[j+5];
+            d[j+6] = Yv[j+6] + beta * d[j+6];
+            d[j+7] = Yv[j+7] + beta * d[j+7];
+        }
+        for(;j<n;j++){
+            d[j] = Yv[j] + beta * d[j];
+        }
         deltaOld = deltaNew;
 
         it++;
@@ -287,7 +367,7 @@ double calcNormaEuclidiana(double *x, uint n){
     return sqrt(aux);
 }
 
-void calcResidue(struct diagMat *A,double *B,uint k, double *x, double *r, double *time)
+void calcResidue(struct diagMat *restrict A,double *restrict B,uint k, double *restrict x, double *restrict r, double *restrict time)
 { 
     uint n = A->n;
 
@@ -295,11 +375,23 @@ void calcResidue(struct diagMat *A,double *B,uint k, double *x, double *r, doubl
         *time = timestamp();
 
 
-    double* sum = malloc(sizeof(double)*n);
+    double* sum = aligned_alloc(32,sizeof(double)*n);
     multMatVet(A, x, sum, k);
 
-    for (uint i = 0; i<n; i++)
+    uint i = 0;
+    for (; i < n - n%UNROLL; i+=UNROLL){
         r[i]=B[i]-sum[i];
+        r[i+1]=B[i+1]-sum[i+1];
+        r[i+2]=B[i+2]-sum[i+2];
+        r[i+3]=B[i+3]-sum[i+3];
+        r[i+4]=B[i+4]-sum[i+4];
+        r[i+5]=B[i+5]-sum[i+5];
+        r[i+6]=B[i+6]-sum[i+6];
+        r[i+7]=B[i+7]-sum[i+7];
+    }
+    for(;i<n;i++){
+        r[i]=B[i]-sum[i];
+    }
 
     if (time)
         *time = timestamp() - *time;

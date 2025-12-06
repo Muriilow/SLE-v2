@@ -6,6 +6,7 @@
 #include <sys/time.h>
 
 #define uint unsigned int
+#define UNROLL 8
 /*
  * Struct que define um sistema Linear
  * A: Matriz k-diagonal 
@@ -18,6 +19,7 @@ struct LinearSis {
     double* b;
     uint n; 
     uint k; 
+    double padding; //para permitir aligned_alloc de 32
 };
 
 struct diagMat {
