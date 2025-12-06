@@ -139,78 +139,6 @@ int genSymmetricPositive(struct LinearSis *SL, struct diagMat *ASP, double *bsp,
     }
 }   
 
-int genSymmetricPositive(struct LinearSis *restrict SL, struct diagMat *restrict ASP, double *restrict bsp, double *restrict time)
-{
-    struct diagMat* A = SL->A;
-    double* b = SL->b;
-    uint n = A->n;
-
-    uint linha = 0;
-    double linhaV[7];
-    int offset = (linha-3);
-    double soma = 0.0;
-    initDiag(ASP,13,n);
-
-    for(linha; linha <= 3; linha++){
-        bsp[linha] = 0;
-        for(uint i = 0; i <= 3+linha; i++){
-            linhaV[i] = A->Diags[(3-linha+i)*n+linha];
-            bsp[linha] += A->Diags[(3-linha+i)*n+linha]*b[i];
-        }
-        for(uint col = 0; col < n; col++){
-            soma = 0.0;
-            for(uint i = 0; i <= 3+linha; i++){
-                if(3+i-col >= 0 && 3+i-col < 7 ){
-                    soma += linhaV[i] * A->Diags[(3+i-col)*n+col];
-                }
-            }
-            if(6-col+linha >= 0 && 6-col+linha < n ){
-                ASP->Diags[(6-col+linha)*n+col] = soma;
-            }
-        }
-    }
-    for(linha; linha < n-3; linha++){
-        bsp[linha] = 0.0;   
-        uint teste = 2*(linha - 3);
-        for(uint i = 0; i < 7; i++){
-            linhaV[i] = A->Diags[i*n+linha];
-            bsp[linha] += A->Diags[i*n+linha]*b[i+linha-3];
-        }
-        for(uint col = 0; col < n; col++){
-            soma = 0.0;
-            for(uint i = 0; i <= 3+linha; i++){
-                if(linha+i-col >= 0 && linha+i-col < 7 && i < 7 && linha-3 < n){
-                    soma += linhaV[i] * A->Diags[(linha+i-col)*n+col];
-                }
-            }
-            if(6-col+linha >= 0 && 6-col+linha < 13 && col < n){
-                ASP->Diags[(6-col+linha)*n+col] = soma;
-            }
-        }
-    }
-
-    for(linha; linha < n; linha++){
-        bsp[linha] = 0.0;
-        for(uint i = 0; i < n+3-linha; i++){
-            linhaV[i] = A->Diags[(i)*n+linha];
-            bsp[linha] += A->Diags[(i)*n+linha]*b[linha-3+i];
-        }
-        for(uint col = 0; col <= n; col++){
-            soma = 0.0;
-            for(uint i = 0; i <= n+2-linha; i++){
-                if(6-col+i >= 0 && 6-col+i < 7){
-                    soma += linhaV[i] * A->Diags[(6-col+i)*n+(linha-6+col)];
-                }
-            }
-            if(12-col >= 0 && 12-col < 13 && linha+col-6 < n){
-                ASP->Diags[(12-col)*n+(linha+col-6)] = soma;
-            }
-        }
-        
-    }
-}   
-
-
 /*Um pre condicionamento melhora um SL simetrico, positivo, definido e mal condicionado.*/
 int genPreCond(struct diagMat *A, double w, uint n,
         double* M, double *time)
@@ -262,20 +190,6 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
         fprintf(stderr, "Falha na alocação de memória\n");
         return -1;
     }
-    uint i = 0;
-    for (; i < n- n%UNROLL; i+=UNROLL){
-        d[i  ] = 0.0;
-        d[i+1] = 0.0;
-        d[i+2] = 0.0;
-        d[i+3] = 0.0;
-        d[i+4] = 0.0;
-        d[i+5] = 0.0;
-        d[i+6] = 0.0;
-        d[i+7] = 0.0;
-    }
-    for(;i<n;i++){
-        d[i] = 0.0;
-    }
 
     // Y para calcular o SL com condicionador
     for (uint i = 0; i < n; i++)
@@ -291,6 +205,7 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
     double alpha; // ak
     double deltaOld = 0.0;
     double deltaNew = 0.0;
+    double valueNew = 0.0;
     double beta = 0.0;
     double tIter = timestamp();
     uint it = 1;
@@ -313,14 +228,9 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
             return -1;
         }
         alpha = deltaOld / cAd; //Calculando ak
-
+       
         deltaNew = 0.0;
-        for(j = 0;j < n%UNROLL; j+=8){
-            
-            x[j] += alpha * d[j]; //Xk+1 = Xk + akdk
-            r[j] -= alpha * c[j]; //rk+1 = rk - akAdk
-            Yv[j] = M[j] * r[j];  // y = M⁻¹ * r
-            deltaNew += Yv[j] * r[j];
+        for (uint i = 0; i < n; i++) {
 
             //Xk+1 = Xk + akdk
             x[i] += alpha * d[i];
@@ -372,7 +282,6 @@ double calcNormaEuclidiana(double *x, uint n){
 
     for (uint i = 0; i < n; i++){
         aux += x[i]*x[i];
-        //printf("aux(%f) = (%f)*(%f)\n",aux, x[i], x[i]);
     }
 
     return sqrt(aux);

@@ -8,8 +8,6 @@
 
 #include "utils.h"
 
-#define UNROLL 8
-
 
 /*ATENCAO: Funcoes inline tem sua implementacao no .h*/
 
@@ -113,4 +111,3 @@ void inline static initDiag(struct diagMat* A, uint k, uint n);
 void static multMatVet(struct diagMat *A, double *B, double *C, uint k);
 
 #endif // __SISLIN_H__;
-
