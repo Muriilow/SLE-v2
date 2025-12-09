@@ -49,7 +49,6 @@ int main(){
     genSymmetricPositive(newdiag, sympos, spb, NULL);
 
     genPreCond(sympos, w, n, M, NULL);
-    printVetor(M,n);
 
     double* x = calloc(n,sizeof(double));
     double* r = calloc(n,sizeof(double));
@@ -75,12 +74,6 @@ int main(){
     double NormaR = calcNormaEuclidiana(r, n);
 
     printf("%d\n",n);
-
-    printf("X: ");
-    printVetor(x,n);
-
-    printf("R: ");
-    printVetor(r,n);
     
     printf("normaR: %.8g\n", NormaR);
 

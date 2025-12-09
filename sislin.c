@@ -219,8 +219,6 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
     for (; i < n; i++)
         d[i] = Yv[i];
 
-    
-
     double cAd = 0.0; //dkt * Adk
     double alpha; // ak
     double deltaOld = 0.0;
@@ -262,7 +260,7 @@ int conjGradientPre(struct diagMat *A, double *B, double *x, double *r, double *
         alpha = deltaOld / cAd; //Calculando ak
 
         deltaNew = 0.0;
-        for(j = 0;j < n%UNROLL; j+=8){
+        for(j = 0;j < n-n%UNROLL; j+=UNROLL){
             
             x[j  ] += alpha * d[j  ]; //Xk+1 = Xk + akdk
             x[j+1] += alpha * d[j+1];

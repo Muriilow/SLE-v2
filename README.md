@@ -1,16 +1,7 @@
-Modificações feitas - Murilo Bob 
+Detalhes importantes dessa nova versão:
 
-Remoção de diagonais nulas na estrutura do sistema linear; ok
-Uso de desenrolamento de loops unroll; <- só dps de corrigir a diferença entre residuo da sympos e inicial
-Uso de unsigned int quando necessário; ok 
-Remoção de cálculos matemáticos pesados;
-Diminuição de if statements em loops; ok -> separar casos de inicio meio e fim(acho que da pra melhor bastante aqui)
-Uso de funções inline; ok
-Uso de declarações estáticas. ok
-vetorização de matriz.
-
-
-1. Modificar todos os int para unsigned ints quando possivel, seguindo (TODO: LINK)
+- O número de iterações esta fixada em 25 conforme o enunciado;
+- O programa não faz print do sistema linear e nem do vetor resultado pois para sistemas lineares de ordem grande (10000, 20000, etc) ocorria problemas no script python, espcificamente na leitura de csv. 
 
 # Solução de sistemas lineares esparsos usando Pré-condicionadores
 
